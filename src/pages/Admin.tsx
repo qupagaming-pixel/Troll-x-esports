@@ -1163,31 +1163,48 @@ export default function AdminPage({ onPageChange }: AdminPageProps) {
               </div>
 
               <div className="space-y-3">
-                {users
-                  .filter(u => u.username.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map((u) => (
-                  <div 
-                    key={u.id}
-                    onClick={() => onPageChange(Page.ADMIN_USER_PROFILE, u.id)}
-                    className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-primary transition-all"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-neutral-700 border border-white/5">
-                        <Users size={20} />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-black italic">{u.username}</h4>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-neutral-600">{u.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black text-emerald-400 italic">
-                        ₹{(u.wallet?.deposit || 0) + (u.wallet?.winnings || 0) + (u.wallet?.bonus || 0)}
-                      </span>
-                      {u.isBanned && <Ban size={14} className="text-red-500" />}
-                    </div>
+                {users.length === 0 ? (
+                  <div className="p-8 text-center text-neutral-500 bg-neutral-900/50 rounded-2xl border border-neutral-800">
+                    <Users size={32} className="mx-auto mb-2 opacity-30 text-neutral-400" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-neutral-400">No users found</p>
+                    <p className="text-[10px] text-neutral-600 mt-1">Users will appear here once registered.</p>
                   </div>
-                ))}
+                ) : (
+                  users
+                    .filter(u => {
+                      const term = searchTerm.toLowerCase().trim();
+                      if (!term) return true;
+                      return (
+                        (u.username || '').toLowerCase().includes(term) ||
+                        (u.email || '').toLowerCase().includes(term) ||
+                        (u.phone || '').includes(term) ||
+                        (u.id || '').includes(term)
+                      );
+                    })
+                    .map((u) => (
+                    <div 
+                      key={u.id}
+                      onClick={() => onPageChange(Page.ADMIN_USER_PROFILE, u.id)}
+                      className="p-4 bg-neutral-900 border border-neutral-800 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-primary transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-neutral-700 border border-white/5">
+                          <Users size={20} />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black italic">{u.username || 'Gamer'}</h4>
+                          <p className="text-[8px] font-black uppercase tracking-widest text-neutral-600">{u.email || u.phone || u.id}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black text-emerald-400 italic">
+                          ₹{(u.wallet?.deposit || 0) + (u.wallet?.winnings || 0) + (u.wallet?.bonus || 0)}
+                        </span>
+                        {u.isBanned && <Ban size={14} className="text-red-500" />}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </motion.div>
           )}

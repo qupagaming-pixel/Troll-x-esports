@@ -1,22 +1,41 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, setLogLevel } from 'firebase/firestore';
+import { 
+  initializeFirestore, 
+  setLogLevel, 
+  persistentLocalCache, 
+  persistentMultipleTabManager 
+} from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-// Suppress benign connection warnings in iframe sandboxes
+// Suppress benign connection warnings
 setLogLevel('error');
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore with force long polling to guarantee instant connection in iframe/proxy environments
-export const db = initializeFirestore(
-  app,
-  {
-    experimentalForceLongPolling: true,
-  },
-  firebaseConfig.firestoreDatabaseId
-);
+const rawDbId = firebaseConfig.firestoreDatabaseId;
+const targetDbId = rawDbId && rawDbId !== '(default)' ? rawDbId : undefined;
+
+// Initialize Firestore with local cache for instant reload and responsive synchronization
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(
+    app,
+    {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    },
+    targetDbId
+  );
+} catch {
+  firestoreDb = initializeFirestore(
+    app,
+    {},
+    targetDbId
+  );
+}
+
+export const db = firestoreDb;
 
 export const storage = getStorage(app);
 export const auth = getAuth();

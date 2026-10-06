@@ -10,19 +10,23 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AuthProps {
   onLogin: () => void;
 }
 
 const DEFAULT_USER_DATA = {
-  walletBalance: 100,
-  bonus: 100,
-  winnings: 0,
+  wallet: {
+    deposit: 100,
+    winnings: 0,
+    bonus: 100,
+  },
+  walletBalance: 200,
   isKycVerified: false,
   stats: {
     matchesPlayed: 0,
+    totalWins: 0,
     totalKills: 0,
     totalWinnings: 0,
   }
@@ -164,31 +168,24 @@ export default function Auth({ onLogin }: AuthProps) {
 
           const referredBy = getReferrerFromUrl();
 
-          // Create Firestore Document with graceful failure
+          // Create Firestore Document immediately
           try {
-            await withTimeout(
-              setDoc(doc(db, 'users', firebaseUser.uid), {
-                username,
-                email,
-                phone,
-                ...DEFAULT_USER_DATA,
-                referredBy: referredBy || null,
-                deviceId,
-                referralClaimed: false,
-                createdAt: serverTimestamp(),
-              }),
-              3000,
-              'Profile creation delayed.'
-            );
+            await setDoc(doc(db, 'users', firebaseUser.uid), {
+              username,
+              email,
+              phone: phone || '',
+              ...DEFAULT_USER_DATA,
+              referredBy: referredBy || null,
+              deviceId,
+              referralClaimed: false,
+              createdAt: serverTimestamp(),
+            });
           } catch (fsError) {
-            console.warn('Firestore profile creation failed or timed out:', fsError);
-            // Profile will be checked/re-created in App.tsx on initialization if missing
-            setErrors({ general: 'Profile created with warnings. Please update phone in settings later.' });
+            console.warn('Firestore profile creation notice:', fsError);
           }
 
           setSuccessMsg('Registration successful! Redirecting...');
           onLogin();
-          // UI will redirect via onAuthStateChanged in App.tsx but onLogin provides immediate state feedback
         } catch (error: any) {
           setErrors({ general: mapAuthError(error.code || error.message) });
         }
@@ -196,7 +193,6 @@ export default function Auth({ onLogin }: AuthProps) {
     } catch (err: any) {
       setErrors({ general: err.message || 'Something went wrong' });
     } finally {
-      // Auto stop loader
       setLoading(false);
     }
   };
@@ -206,7 +202,35 @@ export default function Auth({ onLogin }: AuthProps) {
     setErrors({});
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      if (firebaseUser) {
+        try {
+          const userRef = doc(db, 'users', firebaseUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            let deviceId = localStorage.getItem('khel_galli_device_id');
+            if (!deviceId) {
+              deviceId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+              localStorage.setItem('khel_galli_device_id', deviceId);
+            }
+            await setDoc(userRef, {
+              username: firebaseUser.displayName || `Gamer_${firebaseUser.uid.slice(0, 5)}`,
+              email: firebaseUser.email || '',
+              phone: firebaseUser.phoneNumber || '',
+              ...DEFAULT_USER_DATA,
+              referredBy: getReferrerFromUrl() || null,
+              deviceId,
+              referralClaimed: false,
+              createdAt: serverTimestamp(),
+            });
+          }
+        } catch (e) {
+          console.warn('Google user init notice:', e);
+        }
+      }
+
       onLogin();
     } catch (error: any) {
       console.error('Login failed:', error);

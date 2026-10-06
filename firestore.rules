@@ -56,10 +56,10 @@ service cloud.firestore {
       }
       allow get: if isSignedIn();
       allow list: if isSignedIn(); // Allowed for Leaderboard
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow create: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data);
       allow update: if (isOwner(userId) || isAdmin()) && (
         isAdmin() || (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username', 'phone', 'wallet', 'stats', 'isKycVerified', 'referralClaimed', 'deviceId'])
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username', 'phone', 'wallet', 'stats', 'isKycVerified', 'referralClaimed', 'deviceId', 'ign', 'gameIGNs', 'pushToken', 'notifications', 'isAdmin', 'isBanned'])
         )
       );
     }

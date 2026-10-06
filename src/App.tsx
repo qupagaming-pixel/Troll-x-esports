@@ -114,6 +114,8 @@ export default function App() {
 
     const seedDatabase = async (email: string, uid: string) => {
       if (!isUserAdmin(email, uid)) return;
+      if (sessionStorage.getItem('khel_galli_seeded')) return;
+      sessionStorage.setItem('khel_galli_seeded', 'true');
       try {
         // Independence seeding for games
         const gamesSnap = await getDocs(collection(db, 'games'));
@@ -291,26 +293,31 @@ export default function App() {
               ...DEFAULT_USER_DATA,
               isAdmin: isAdmin
             };
+            setUser({ id: firebaseUser.uid, ...newUser });
+            setIsLoggedIn(true);
+            setLoading(false);
+            
             await setDoc(userDocRef, {
               ...newUser,
               createdAt: serverTimestamp(),
-            });
-            // Snapshot will pick this up
+            }).catch(e => console.warn('Profile write notice:', e));
           }
         }, (error) => {
           handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
           setLoading(false);
         });
 
-        // Also fetch registrations
-        try {
-          const q = query(collection(db, 'registrations'), where('userId', '==', firebaseUser.uid));
-          const regSnap = await getDocs(q);
-          const matchIds = regSnap.docs.map(doc => doc.data().tournamentId);
-          setJoinedMatchIds(matchIds);
-        } catch (error) {
-          console.error("Error fetching registrations:", error);
-        }
+        // Also fetch registrations in background without blocking
+        (async () => {
+          try {
+            const q = query(collection(db, 'registrations'), where('userId', '==', firebaseUser.uid));
+            const regSnap = await getDocs(q);
+            const matchIds = regSnap.docs.map(doc => doc.data().tournamentId);
+            setJoinedMatchIds(matchIds);
+          } catch (error) {
+            console.error("Error fetching registrations:", error);
+          }
+        })();
       } else {
         setIsLoggedIn(false);
         setUser(null);
