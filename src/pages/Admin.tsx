@@ -15,6 +15,7 @@ import { formatMatchTime } from '../utils/dateUtils';
 import SafeImage from '../components/SafeImage';
 import { uploadOriginalImage } from '../utils/imageCompressor';
 import AdminNotificationsTab from '../components/AdminNotificationsTab';
+import { isUserAdmin } from '../constants';
 
 import { 
   collection, doc, onSnapshot, updateDoc, deleteDoc,
@@ -234,10 +235,7 @@ export default function AdminPage({ onPageChange }: AdminPageProps) {
     // Auth check
     const email = auth.currentUser?.email;
     const uid = auth.currentUser?.uid;
-    const isAdminUser = email === 'mahendrathakur9009@gmail.com' || 
-                       email === 'qupagaming@gmail.com' || 
-                       email === 'mahendrar9009@gmail.com' ||
-                       uid === 'XoXyXcnrlzOaMIKKolXnU3mT9xn1';
+    const isAdminUser = isUserAdmin(email, uid);
 
     if (!isAdminUser) {
       onPageChange(Page.HOME);

@@ -19,6 +19,7 @@ import { Page, User } from '../types';
 import SupportModal from '../components/SupportModal';
 import RulesModal from '../components/RulesModal';
 import MyOrdersModal from '../components/MyOrdersModal';
+import { isUserAdmin } from '../constants';
 
 interface ProfilePageProps {
   user: User;
@@ -43,11 +44,9 @@ export default function ProfilePage({ user, onPageChange, onLogout }: ProfilePag
     });
   };
 
-  const isAdminUser =
-    user?.isAdmin ||
-    ['mahendrathakur9009@gmail.com', 'mahendrar9009@gmail.com', 'qupagaming@gmail.com'].includes(
-      user?.email || ''
-    );
+  const isAdminUser = Boolean(
+    user?.isAdmin || isUserAdmin(user?.email, user?.id)
+  );
 
   const totalBalance =
     (user?.wallet?.deposit || 0) + (user?.wallet?.winnings || 0) + (user?.wallet?.bonus || 0);

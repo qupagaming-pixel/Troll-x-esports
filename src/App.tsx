@@ -7,7 +7,7 @@ import BottomNav from './components/BottomNav';
 import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, writeBatch, onSnapshot, increment, updateDoc } from 'firebase/firestore';
-import { GAMES } from './constants';
+import { GAMES, isUserAdmin } from './constants';
 
 // Pages
 import Auth from './pages/Auth';
@@ -113,8 +113,7 @@ export default function App() {
     let unsubscribeUser: (() => void) | null = null;
 
     const seedDatabase = async (email: string, uid: string) => {
-      const admins = ["qupagaming@gmail.com", "mahendrathakur9009@gmail.com", "mahendrar9009@gmail.com"];
-      if (!admins.includes(email) && uid !== "XoXyXcnrlzOaMIKKolXnU3mT9xn1") return;
+      if (!isUserAdmin(email, uid)) return;
       try {
         // Independence seeding for games
         const gamesSnap = await getDocs(collection(db, 'games'));
@@ -263,9 +262,14 @@ export default function App() {
               return;
             }
 
-            setUser({ id: userDoc.id, ...data } as User);
+            const isAdmin = Boolean(data.isAdmin || isUserAdmin(firebaseUser.email, firebaseUser.uid));
+            setUser({ id: userDoc.id, ...data, isAdmin } as User);
             setIsLoggedIn(true);
             setLoading(false);
+
+            if (isAdmin && !data.isAdmin) {
+              setDoc(userDocRef, { isAdmin: true }, { merge: true }).catch(() => {});
+            }
 
             // Process referral rewards if eligible
             if (data.referredBy && !data.referralClaimed) {
@@ -279,10 +283,7 @@ export default function App() {
             }
           } else {
             // For Google Auth or unexpected cases, create default profile
-            const isAdmin = firebaseUser.email === 'mahendrathakur9009@gmail.com' || 
-                           firebaseUser.email === 'mahendrar9009@gmail.com' || 
-                           firebaseUser.email === 'qupagaming@gmail.com' ||
-                           firebaseUser.uid === 'XoXyXcnrlzOaMIKKolXnU3mT9xn1';
+            const isAdmin = isUserAdmin(firebaseUser.email, firebaseUser.uid);
             const newUser: User = {
               username: firebaseUser.displayName || `Gamer_${firebaseUser.uid.slice(0, 5)}`,
               email: firebaseUser.email || '',

@@ -101,6 +101,7 @@ async function seedInitialData() {
   
   try {
     const adminEmails = [
+      'khelgallli@gmail.com',
       'mahendrathakur9009@gmail.com',
       'qupagaming@gmail.com',
       'mahendrar9009@gmail.com'
