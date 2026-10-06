@@ -144,7 +144,7 @@ export default function Auth({ onLogin }: AuthProps) {
       if (isLogin) {
         // Handle Login
         try {
-          await withTimeout(signInWithEmailAndPassword(auth, email, password), 5000, 'Login taking too long. Check connection.');
+          await signInWithEmailAndPassword(auth, email, password);
           onLogin();
         } catch (error: any) {
           setErrors({ general: mapAuthError(error.code || error.message) });
@@ -152,11 +152,7 @@ export default function Auth({ onLogin }: AuthProps) {
       } else {
         // Handle Registration
         try {
-          const userCredential = await withTimeout(
-            createUserWithEmailAndPassword(auth, email, password),
-            5000,
-            'Signup taking too long. Check connection.'
-          );
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const firebaseUser = userCredential.user;
 
           // Simple device ID tracking

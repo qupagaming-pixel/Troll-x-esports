@@ -110,6 +110,14 @@ export default function App() {
   const [joinedMatchIds, setJoinedMatchIds] = useState<string[]>([]);
 
   useEffect(() => {
+    // Safety guard: ensure full-page spinner unblocks within 1.5 seconds maximum
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     let unsubscribeUser: (() => void) | null = null;
 
     const seedDatabase = async (email: string, uid: string) => {

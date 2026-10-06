@@ -19,20 +19,18 @@ const targetDbId = rawDbId && rawDbId !== '(default)' ? rawDbId : undefined;
 
 // Initialize Firestore with local cache for instant reload and responsive synchronization
 let firestoreDb;
+const cacheSettings = {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+};
+
 try {
-  firestoreDb = initializeFirestore(
-    app,
-    {
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    },
-    targetDbId
-  );
+  firestoreDb = targetDbId
+    ? initializeFirestore(app, cacheSettings, targetDbId)
+    : initializeFirestore(app, cacheSettings);
 } catch {
-  firestoreDb = initializeFirestore(
-    app,
-    {},
-    targetDbId
-  );
+  firestoreDb = targetDbId
+    ? initializeFirestore(app, {}, targetDbId)
+    : initializeFirestore(app, {});
 }
 
 export const db = firestoreDb;
