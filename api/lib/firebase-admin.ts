@@ -5,13 +5,13 @@ import path from "path";
 
 // Embedded default fallback config for serverless environments
 const DEFAULT_FIREBASE_CONFIG = {
-  projectId: "khel-galli-49b03",
-  appId: "1:975078214004:web:7eb2b340d559ed4ae34421",
-  apiKey: "AIzaSyCaMCsb7uh_O4JIhxp5ElxVRXf9KXYbQb8",
-  authDomain: "khel-galli-49b03.firebaseapp.com",
+  projectId: "gen-lang-client-0035950750",
+  appId: "1:258567585403:web:770482a0e7d0e50f7c2cde",
+  apiKey: "AIzaSyDhUDWq5v-qh4j2uejkoyrN1ndg2wgaJxQ",
+  authDomain: "gen-lang-client-0035950750.firebaseapp.com",
   firestoreDatabaseId: "ai-studio-77efbb54-a595-4a00-a189-15e356a65ecc",
-  storageBucket: "khel-galli-49b03.firebasestorage.app",
-  messagingSenderId: "975078214004"
+  storageBucket: "gen-lang-client-0035950750.firebasestorage.app",
+  messagingSenderId: "258567585403"
 };
 
 export function getFirebaseAdmin() {

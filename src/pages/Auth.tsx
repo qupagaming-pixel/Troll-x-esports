@@ -60,16 +60,24 @@ export default function Auth({ onLogin }: AuthProps) {
     return params.get('ref');
   };
 
-  const mapAuthError = (code: string) => {
+  const mapAuthError = (code: string, fallbackMessage?: string) => {
     switch (code) {
-      case 'auth/email-already-in-use': return 'Email already registered';
+      case 'auth/unauthorized-domain':
+        return `Domain "${window.location.hostname}" is not authorized. Add it to Firebase Console -> Authentication -> Settings -> Authorized domains.`;
+      case 'auth/operation-not-allowed':
+        return 'This sign-in method is not enabled. Enable Email/Password and Google in Firebase Console -> Authentication -> Sign-in method.';
+      case 'auth/popup-closed-by-user':
+        return 'Google sign-in popup was closed before completing.';
+      case 'auth/popup-blocked':
+        return 'Popup blocked by browser. Please allow popups for this website.';
+      case 'auth/email-already-in-use': return 'Email already registered. Please switch to Login.';
       case 'auth/weak-password': return 'Password must be at least 6 characters';
       case 'auth/network-request-failed': return 'Check your internet connection';
       case 'auth/invalid-email': return 'Enter valid email';
-      case 'auth/user-not-found':
+      case 'auth/user-not-found': return 'No account found with this email. Click "Register" to create one.';
       case 'auth/wrong-password':
       case 'auth/invalid-credential': return 'Invalid email or password';
-      default: return 'An unexpected error occurred. Try again.';
+      default: return fallbackMessage || code || 'An unexpected error occurred. Try again.';
     }
   };
 
@@ -200,9 +208,9 @@ export default function Auth({ onLogin }: AuthProps) {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       onLogin();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
-      setErrors({ general: 'Google login failed.' });
+      setErrors({ general: mapAuthError(error?.code, error?.message || 'Google login failed.') });
     } finally {
       setLoading(false);
     }
